@@ -1,73 +1,65 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono:wght@400;700&family=Bebas+Neue&family=Space+Grotesk:wght@300;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;800;900&family=JetBrains+Mono:wght@400;700&family=Space+Grotesk:wght@700&display=swap');
 @import "tailwindcss";
 
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
-  --font-display: "Bebas Neue", sans-serif;
-  --font-technical: "Space Grotesk", sans-serif;
+  --font-display: "Space Grotesk", sans-serif;
 
-  --color-cyber-green: #39FF14;
-  --color-cyber-pink: #FF0055;
-  --color-cyber-blue: #00F0FF;
-  --color-cyber-gold: #FFD700;
-  --color-cyber-bg: #0A0A0A;
-  --color-cyber-card: #151515;
-  --color-cyber-border: #2A2A2A;
+  --color-swiss-bg: #000000;
+  --color-swiss-text: #FFFFFF;
+  --color-swiss-accent: #00F0FF; /* Bright Cyan for dark mode */
+  --color-swiss-warning: #FF3D00; /* Safety Orange */
+  --color-swiss-muted: #1A1A1A;
+  --color-swiss-border: #FFFFFF;
 }
 
 @layer base {
   body {
-    @apply antialiased bg-cyber-bg text-gray-300;
+    @apply antialiased bg-swiss-bg text-swiss-text selection:bg-swiss-accent selection:text-white;
+    cursor: none;
   }
 }
 
 .custom-scrollbar::-webkit-scrollbar {
-  width: 4px;
+  width: 10px;
 }
 
 .custom-scrollbar::-webkit-scrollbar-track {
-  background: transparent;
+  background: var(--color-swiss-muted);
 }
 
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: var(--color-cyber-border);
-  border-radius: 10px;
+  background: var(--color-swiss-border);
 }
 
-.crt-overlay {
+.swiss-panel {
+  @apply bg-black border-2 border-swiss-border relative transition-all duration-200;
+}
+
+.swiss-button-primary {
+  @apply bg-swiss-border text-black px-6 py-3 font-black uppercase tracking-tighter hover:bg-swiss-accent hover:text-black transition-all active:translate-y-0.5;
+}
+
+.swiss-button-outline {
+  @apply border-2 border-swiss-border text-white px-6 py-3 font-black uppercase tracking-tighter hover:bg-white hover:text-black transition-all active:translate-y-0.5;
+}
+
+.stat-label {
+  @apply text-[10px] font-black uppercase tracking-[0.2em] text-white/40 mb-1 block leading-none;
+}
+
+.cursor-follower {
   position: fixed;
   top: 0;
   left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.1) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.03), rgba(0, 255, 0, 0.01), rgba(0, 0, 255, 0.03));
-  background-size: 100% 4px, 6px 100%;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
   pointer-events: none;
-  z-index: 1000;
+  z-index: 10000;
+  border: 2px solid var(--color-swiss-accent);
+  background-color: rgba(255, 255, 255, 0.1);
+  mix-blend-mode: difference;
 }
 
-.cyber-panel {
-  @apply bg-cyber-card border border-cyber-border relative overflow-hidden;
-}
-
-.cyber-panel::before {
-  content: '';
-  @apply absolute top-0 left-0 w-1 h-full bg-cyber-blue opacity-0 transition-opacity duration-300;
-}
-
-.cyber-panel:hover::before {
-  @apply opacity-100;
-}
-
-.glow-blue:hover {
-  box-shadow: 0 0 20px rgba(0, 240, 255, 0.4);
-}
-
-.glow-green:hover {
-  box-shadow: 0 0 20px rgba(57, 255, 20, 0.4);
-}
-
-.glow-pink:hover {
-  box-shadow: 0 0 20px rgba(255, 0, 85, 0.4);
-}

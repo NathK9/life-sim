@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion, AnimatePresence, useMotionValue, useSpring } from 'motion/react';
 import { 
   User, 
   Briefcase, 
@@ -46,6 +46,20 @@ const createInitialState = (name: string = ''): GameState => ({
 });
 
 export default function App() {
+  const mouseX = useMotionValue(0);
+  const mouseY = useMotionValue(0);
+  const springX = useSpring(mouseX, { stiffness: 500, damping: 28 });
+  const springY = useSpring(mouseY, { stiffness: 500, damping: 28 });
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      mouseX.set(e.clientX);
+      mouseY.set(e.clientY);
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    return () => window.removeEventListener('mousemove', handleMouseMove);
+  }, [mouseX, mouseY]);
+
   const [state, setState] = useState<GameState>(createInitialState());
   const [activeTab, setActiveTab] = useState<'life' | 'job' | 'assets' | 'social' | 'activities' | 'shop'>('life');
   const [isNamingScreen, setIsNamingScreen] = useState(true);
@@ -506,88 +520,90 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-cyber-bg text-gray-300 font-sans selection:bg-cyber-blue selection:text-black">
-      <div className="crt-overlay" />
+    <div className="min-h-screen bg-swiss-bg text-swiss-text font-sans p-4 md:p-8">
+      <motion.div 
+        className="cursor-follower"
+        style={{ x: springX, y: springY, translateX: '-50%', translateY: '-50%' }}
+      />
       {/* HUD / Stats Bar */}
-      <header className="sticky top-0 z-10 bg-cyber-bg/80 backdrop-blur-xl border-b border-cyber-border p-4 px-6">
-        <div className="max-w-6xl mx-auto flex flex-wrap gap-8 justify-between items-center text-cyber-blue">
+      <header className="fixed bottom-0 left-0 right-0 z-50 bg-black border-t-2 border-swiss-border p-4 px-6 md:static md:bg-transparent md:border-none md:p-0 md:mb-12">
+        <div className="max-w-6xl mx-auto flex flex-wrap gap-8 justify-between items-end">
           <div className="flex flex-col">
-            <span className="text-[10px] uppercase font-black opacity-40 italic font-mono">Terminal_Identity</span>
+            <span className="stat-label">identity.html</span>
             <div className="flex items-center gap-2">
-              <span className="font-display text-2xl italic uppercase tracking-widest text-cyber-green">{state.name || 'ANONYMOUS'}</span>
+              <span className="font-black text-4xl uppercase tracking-tighter leading-none text-white">{state.name || 'ANONYMOUS'}</span>
             </div>
           </div>
 
           <div className="flex flex-col">
-            <span className="text-[10px] uppercase font-black opacity-40 font-mono">Uptime_Metric</span>
+            <span className="stat-label">uptime.html</span>
             <div className="flex items-center gap-2 text-white">
-              <Calendar className="w-4 h-4 opacity-50" />
-              <span className="font-mono text-2xl font-black">{state.age} <span className="text-xs font-normal opacity-50">CYCLES</span></span>
+              <Calendar className="w-4 h-4" />
+              <span className="font-black text-4xl leading-none">{state.age} <span className="text-xs font-normal opacity-50">YRS</span></span>
             </div>
           </div>
           
           <div className="flex flex-col">
-            <span className="text-[10px] uppercase font-black opacity-40 font-mono">Net_Credit_Flow</span>
+            <span className="stat-label">finance.html</span>
             <div className="flex items-center gap-2">
-              <DollarSign className="w-4 h-4 opacity-50 text-cyber-green" />
-              <span className="font-mono text-2xl font-black text-cyber-green">${state.money.toLocaleString()}</span>
+              <DollarSign className="w-5 h-5 text-swiss-accent" />
+              <span className="font-black text-4xl text-swiss-accent leading-none">${state.money.toLocaleString()}</span>
             </div>
           </div>
 
-          <div className="flex items-center gap-6">
-            <StatBar label="Vitality" value={state.health} icon={<Heart className="w-3 h-3" />} color="bg-cyber-pink" />
-            <StatBar label="Chassis" value={state.fitness} icon={<TrendingUp className="w-3 h-3" />} color="bg-cyber-gold" />
-            <StatBar label="Neural" value={state.happiness} icon={<Smile className="w-3 h-3" />} color="bg-cyber-blue" />
-            <StatBar label="Logic" value={state.smarts} icon={<GraduationCap className="w-3 h-3" />} color="bg-white" />
-            <StatBar label="Optics" value={state.looks} icon={<User className="w-3 h-3" />} color="bg-purple-500" />
+          <div className="flex items-center gap-6 mt-4 lg:mt-0 pb-1">
+            <StatBar label="Health" value={state.health} icon={<Heart className="w-3 h-3" />} color="bg-swiss-warning" />
+            <StatBar label="Fitness" value={state.fitness} icon={<TrendingUp className="w-3 h-3" />} color="bg-swiss-accent" />
+            <StatBar label="Happiness" value={state.happiness} icon={<Smile className="w-4 h-4" />} color="bg-swiss-accent" />
+            <StatBar label="Smarts" value={state.smarts} icon={<GraduationCap className="w-4 h-4" />} color="bg-white" />
+            <StatBar label="Looks" value={state.looks} icon={<User className="w-4 h-4" />} color="bg-white" />
           </div>
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto p-6 pb-40">
+      <main className="max-w-6xl mx-auto pb-44 md:pb-24">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
           {/* Navigation Sidebar */}
-          <nav className="lg:col-span-3 space-y-2">
-            <TabButton active={activeTab === 'life'} onClick={() => setActiveTab('life')} icon={<User />} label="Bio_Log" />
-            <TabButton active={activeTab === 'social'} onClick={() => setActiveTab('social')} icon={<Users />} label="Nodes" />
-            <TabButton active={activeTab === 'job'} onClick={() => setActiveTab('job')} icon={<Briefcase />} label="Sector" />
-            <TabButton active={activeTab === 'activities'} onClick={() => setActiveTab('activities')} icon={<Film />} label="System" />
-            <TabButton active={activeTab === 'assets'} onClick={() => setActiveTab('assets')} icon={<Home />} label="Assets" />
-            <TabButton active={activeTab === 'shop'} onClick={() => setActiveTab('shop')} icon={<ShoppingBag />} label="Market" />
+          <nav className="lg:col-span-3 space-y-3">
+            <TabButton active={activeTab === 'life'} onClick={() => setActiveTab('life')} icon={<User />} label="journal.html" />
+            <TabButton active={activeTab === 'social'} onClick={() => setActiveTab('social')} icon={<Users />} label="nodes.html" />
+            <TabButton active={activeTab === 'job'} onClick={() => setActiveTab('job')} icon={<Briefcase />} label="career.html" />
+            <TabButton active={activeTab === 'activities'} onClick={() => setActiveTab('activities')} icon={<Film />} label="system.html" />
+            <TabButton active={activeTab === 'assets'} onClick={() => setActiveTab('assets')} icon={<Home />} label="vault.html" />
+            <TabButton active={activeTab === 'shop'} onClick={() => setActiveTab('shop')} icon={<ShoppingBag />} label="market.html" />
             
             <button 
               onClick={handleAgeUp}
               disabled={state.isDead || isNamingScreen}
-              className="w-full mt-10 bg-cyber-blue text-black py-6 rounded-none font-display text-xl uppercase tracking-widest hover:bg-cyber-green transition-all disabled:opacity-30 flex flex-col items-center justify-center gap-1 group cursor-pointer border-none active:scale-[0.98] shadow-[0_0_15px_rgba(0,240,255,0.3)] glow-blue hover:glow-green"
+              className="w-full mt-10 bg-swiss-accent text-black py-8 rounded-none font-black uppercase tracking-[0.2em] hover:bg-white transition-all disabled:opacity-30 flex flex-col items-center justify-center gap-1 group cursor-pointer border-none active:scale-[0.98]"
             >
-              <TrendingUp className="w-6 h-6 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-              <span>Initiate Cycle</span>
+              <TrendingUp className="w-8 h-8 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
+              <span>execute_cycle.sh</span>
             </button>
 
             {/* Emergency Boosts */}
-            <div className="mt-8 space-y-2">
+            <div className="mt-8 space-y-3">
               {state.health < 10 && !state.isDead && (
-                <EmergencyButton label="Vitality_Repair" color="bg-cyber-pink" icon={<Heart />} onClick={() => emergencyBoost('health')} />
+                <EmergencyButton label="ER VISIT" color="bg-swiss-warning" icon={<Heart />} onClick={() => emergencyBoost('health')} />
               )}
               {state.fitness < 10 && !state.isDead && (
-                <EmergencyButton label="Chassis_Tune" color="bg-cyber-gold" icon={<TrendingUp />} onClick={() => emergencyBoost('fitness')} />
+                <EmergencyButton label="TRAINER" color="bg-swiss-border" icon={<TrendingUp />} onClick={() => emergencyBoost('fitness')} />
               )}
               {state.happiness < 10 && !state.isDead && (
-                <EmergencyButton label="Neural_Sync" color="bg-cyber-blue" icon={<Smile />} onClick={() => emergencyBoost('happiness')} />
+                <EmergencyButton label="THERAPY" color="bg-swiss-accent" icon={<Smile />} onClick={() => emergencyBoost('happiness')} />
               )}
               {state.smarts < 10 && !state.isDead && (
-                <EmergencyButton label="Logic_Patch" color="bg-white" icon={<GraduationCap />} onClick={() => emergencyBoost('smarts')} />
+                <EmergencyButton label="TUTORING" color="bg-swiss-border" icon={<GraduationCap />} onClick={() => emergencyBoost('smarts')} />
               )}
               {state.looks < 10 && !state.isDead && (
-                <EmergencyButton label="Optic_Refactor" color="bg-purple-600" icon={<User />} onClick={() => emergencyBoost('looks')} />
+                <EmergencyButton label="STYLIST" color="bg-swiss-border" icon={<User />} onClick={() => emergencyBoost('looks')} />
               )}
             </div>
           </nav>
 
           {/* Content Area */}
-          <div className="lg:col-span-9 min-h-[70vh] bg-cyber-card/50 border border-cyber-border p-8 relative overflow-hidden backdrop-blur-md">
-            <div className="absolute top-0 right-0 w-24 h-24 bg-cyber-blue/5 blur-3xl rounded-full -mr-12 -mt-12" />
+          <div className="lg:col-span-9 min-h-[70vh] bg-black border-2 border-swiss-border p-8 md:p-12 relative overflow-hidden">
             <AnimatePresence mode="wait">
               {isNamingScreen ? (
                 <motion.div 
@@ -595,30 +611,31 @@ export default function App() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="fixed inset-0 z-[101] bg-cyber-bg flex items-center justify-center p-8"
+                  className="fixed inset-0 z-50 bg-black flex items-center justify-center p-8"
                 >
-                  <div className="crt-overlay" />
-                  <div className="w-full max-w-sm space-y-8 relative z-10">
-                    <div className="space-y-2">
-                       <h1 className="text-6xl font-display uppercase tracking-widest text-cyber-blue">User_Init</h1>
-                       <p className="text-xs font-mono opacity-40 uppercase tracking-widest">Awaiting identity input for simulation start...</p>
+                  <div className="w-full max-w-sm space-y-12 relative z-10 text-center">
+                    <div className="space-y-4">
+                       <h1 className="text-7xl font-black uppercase tracking-tighter leading-none italic">identity</h1>
+                       <p className="text-xs uppercase font-black tracking-widest opacity-30">Awaiting user classification input</p>
                     </div>
-                    <input 
-                      autoFocus
-                      type="text" 
-                      value={nameInput}
-                      onChange={(e) => setNameInput(e.target.value)}
-                      onKeyDown={(e) => e.key === 'Enter' && handleStartGame()}
-                      placeholder="ENTER_UID"
-                      className="w-full bg-transparent border-b-2 border-cyber-blue p-4 text-4xl font-display tracking-widest outline-none text-cyber-green placeholder:opacity-10"
-                    />
-                    <button 
-                      onClick={handleStartGame}
-                      className="w-full bg-cyber-blue text-black py-6 font-display text-2xl uppercase tracking-widest hover:bg-cyber-green transition-all disabled:opacity-20 shadow-[0_0_20px_rgba(0,240,255,0.2)]"
-                      disabled={!nameInput.trim()}
-                    >
-                      EXECUTE
-                    </button>
+                    <div className="space-y-8">
+                      <input 
+                        autoFocus
+                        type="text" 
+                        value={nameInput}
+                        onChange={(e) => setNameInput(e.target.value)}
+                        onKeyDown={(e) => e.key === 'Enter' && handleStartGame()}
+                        placeholder="NAME_REQUIRED"
+                        className="w-full bg-transparent border-b-8 border-swiss-border p-4 text-5xl font-black uppercase tracking-tighter outline-none focus:border-swiss-accent transition-colors text-center"
+                      />
+                      <button 
+                        onClick={handleStartGame}
+                        className="w-full bg-swiss-accent text-black py-8 font-black uppercase tracking-[0.2em] hover:bg-swiss-border transition-all disabled:opacity-20 text-xl"
+                        disabled={!nameInput.trim()}
+                      >
+                        COMMENCE LIFE
+                      </button>
+                    </div>
                   </div>
                 </motion.div>
               ) : null}
@@ -628,48 +645,46 @@ export default function App() {
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
-                  className="fixed inset-0 z-[100] bg-black/80 backdrop-blur-xl flex items-center justify-center p-6"
+                  className="fixed inset-0 z-[100] bg-black/95 backdrop-blur-md flex items-center justify-center p-6"
                 >
-                  <div className="crt-overlay" />
                   <motion.div 
                     initial={{ scale: 0.9, opacity: 0, y: 20 }}
                     animate={{ scale: 1, opacity: 1, y: 0 }}
-                    className="bg-cyber-bg text-gray-300 p-10 max-w-md w-full border border-cyber-pink/50 shadow-[0_0_50px_rgba(255,0,85,0.2)] relative text-center overflow-hidden"
+                    className="bg-black text-swiss-text p-12 max-w-lg w-full border-4 border-swiss-border relative text-center"
                   >
-                    <div className="absolute top-0 left-0 w-full h-[1px] bg-cyber-pink shadow-[0_0_10px_rgba(255,0,85,0.5)]" />
-                    <Skull className="w-20 h-20 mb-6 mx-auto text-cyber-pink animate-pulse" />
-                    <h1 className="text-6xl font-display uppercase mb-2 tracking-widest text-white">System_Failure</h1>
-                    <p className="text-sm mb-8 opacity-40 font-mono uppercase tracking-[0.3em]">Simulation terminated at age {state.age}.</p>
+                    <Skull className="w-24 h-24 mb-8 mx-auto" />
+                    <h1 className="text-6xl font-black uppercase mb-2 tracking-tighter italic">FINIS.</h1>
+                    <p className="text-xl mb-12 opacity-40 font-black uppercase tracking-widest">End of simulation cycle {state.age}</p>
                     
-                    <div className="grid grid-cols-2 gap-3 mb-10">
-                      <div className="bg-white/5 p-4 border border-cyber-border">
-                        <div className="text-[8px] font-mono uppercase opacity-40 mb-1">Final_Wealth</div>
-                        <div className="text-xl font-mono text-cyber-green">${state.money.toLocaleString()}</div>
+                    <div className="grid grid-cols-2 gap-4 mb-12">
+                      <div className="p-6 border-2 border-swiss-border bg-swiss-muted">
+                        <div className="stat-label">Final Value</div>
+                        <div className="text-3xl font-black">${state.money.toLocaleString()}</div>
                       </div>
-                      <div className="bg-white/5 p-4 border border-cyber-border">
-                        <div className="text-[8px] font-mono uppercase opacity-40 mb-1">Last_Node</div>
-                        <div className="text-sm font-technical uppercase truncate text-cyber-blue">{state.currentJob?.title || 'UNEMPLOYED'}</div>
+                      <div className="p-6 border-2 border-swiss-border bg-swiss-muted">
+                        <div className="stat-label">Peak Role</div>
+                        <div className="text-sm font-black uppercase truncate">{state.currentJob?.title || 'UNEMPLOYED'}</div>
                       </div>
                     </div>
 
                     <button 
                       onClick={resetGame}
-                      className="w-full bg-cyber-pink text-white py-4 uppercase font-display text-2xl tracking-widest hover:bg-white hover:text-black transition-all cursor-pointer active:scale-95 shadow-[0_0_20px_rgba(255,0,85,0.3)]"
+                      className="w-full bg-swiss-border text-white py-6 uppercase font-black text-2xl tracking-widest hover:bg-swiss-accent transition-all cursor-pointer active:scale-95"
                     >
-                      Re_Initialize
+                      RESTART CYCLE
                     </button>
                   </motion.div>
                 </motion.div>
               ) : null}
 
               {activeTab === 'life' && (
-                <motion.div key="life" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-6">
-                  <SectionTitle title="Chronology" subtitle="Your life as it unfolds" />
-                  <div className="space-y-4 h-[55vh] overflow-y-auto pr-4 custom-scrollbar">
+                <motion.div key="life" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-12">
+                  <SectionTitle title="chronology.log" subtitle="Historical record of operational events" />
+                  <div className="space-y-4 h-[55vh] overflow-y-auto pr-6 custom-scrollbar">
                     {state.log.map((entry, i) => (
-                      <div key={i} className={`p-5 group border-l-2 transition-all ${entry.startsWith('Event') ? 'border-cyber-gold bg-cyber-gold/5' : entry.startsWith('Year') ? 'border-cyber-blue bg-cyber-blue/5' : i === 0 ? 'border-cyber-green bg-cyber-green/5' : 'border-cyber-border bg-white/5'}`}>
-                        <div className="text-[10px] font-mono uppercase opacity-30 mb-1">STAMP_{state.log.length - i}</div>
-                        <p className="text-base font-technical tracking-wide text-gray-100 leading-snug uppercase">{entry}</p>
+                      <div key={i} className={`p-6 border-b-2 transition-all ${entry.startsWith('Event') ? 'bg-swiss-accent text-black border-none' : entry.startsWith('Year') ? 'border-swiss-border bg-swiss-muted text-white' : i === 0 ? 'bg-swiss-accent text-black border-none' : 'border-swiss-muted bg-black text-white'}`}>
+                        <div className="text-[10px] uppercase font-black opacity-40 mb-1">MARKER_{state.log.length - i}</div>
+                        <p className="text-xl font-black uppercase tracking-tighter italic leading-none">{entry}</p>
                       </div>
                     ))}
                   </div>
@@ -677,22 +692,22 @@ export default function App() {
               )}
 
               {activeTab === 'social' && (
-                <motion.div key="social" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-8">
-                  <SectionTitle title="The Social Fabric" subtitle="Family, friends, and connections" />
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <motion.div key="social" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-12">
+                  <SectionTitle title="social.html" subtitle="Interpersonal connection hierarchy" />
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {state.relationships.map(rel => (
-                      <div key={rel.id} className={`p-5 border group hover:bg-white/5 transition-all cyber-panel ${rel.type === 'Spouse' ? 'border-cyber-pink shadow-[inset_0_0_10px_rgba(255,0,85,0.1)]' : rel.type === 'Partner' ? 'border-red-900' : 'border-cyber-border'}`}>
-                        <div className="flex justify-between items-start mb-4">
+                      <div key={rel.id} className={`p-8 swiss-panel hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] ${rel.type === 'Spouse' ? 'border-swiss-accent' : 'border-swiss-border'}`}>
+                        <div className="flex justify-between items-start mb-6">
                           <div>
-                            <span className={`text-[10px] font-mono uppercase font-black px-2 py-0.5 mb-2 inline-block ${rel.type === 'Spouse' ? 'text-cyber-pink' : rel.type === 'Partner' ? 'text-red-500' : 'text-cyber-blue'}`}>[{rel.type}]</span>
-                            <h3 className="text-2xl font-display tracking-widest text-white">{rel.name}</h3>
+                            <span className={`text-[10px] font-black uppercase px-2 py-0.5 mb-2 inline-block ${rel.type === 'Spouse' ? 'bg-swiss-accent text-white' : 'bg-swiss-border text-white'}`}>{rel.type}</span>
+                            <h3 className="text-3xl font-black uppercase tracking-tighter leading-none">{rel.name}</h3>
                           </div>
                           <div className="flex gap-2">
                             {rel.type === 'Friend' && (
                                <button 
                                 onClick={() => askOut(rel.id)}
                                 title="Ask Out"
-                                className="p-3 bg-red-950/30 text-cyber-pink border border-red-900/50 hover:bg-cyber-pink hover:text-white transition-all cursor-pointer"
+                                className="p-3 bg-black border-2 border-swiss-border hover:bg-swiss-accent hover:text-white transition-all cursor-pointer"
                               >
                                 <Heart className="w-5 h-5" />
                               </button>
@@ -701,7 +716,7 @@ export default function App() {
                                <button 
                                 onClick={() => proposeToPartner(rel.id)}
                                 title="Propose"
-                                className="p-3 bg-cyber-pink/20 text-cyber-pink border border-cyber-pink/50 hover:bg-cyber-pink hover:text-white transition-all cursor-pointer"
+                                className="p-3 bg-black border-2 border-swiss-accent text-swiss-accent hover:bg-swiss-accent hover:text-white transition-all cursor-pointer"
                               >
                                 <Zap className="w-5 h-5 fill-current" />
                               </button>
@@ -709,7 +724,7 @@ export default function App() {
                             <button 
                               onClick={() => interactWithRel(rel.id)}
                               title="Spend Time"
-                              className="p-3 bg-white/5 text-gray-400 border border-cyber-border hover:bg-cyber-blue hover:text-black transition-all cursor-pointer"
+                              className="p-3 bg-black border-2 border-swiss-border hover:bg-swiss-border hover:text-white transition-all cursor-pointer"
                             >
                               <Smile className="w-5 h-5" />
                             </button>
@@ -717,7 +732,7 @@ export default function App() {
                                <button 
                                 onClick={() => breakUp(rel.id)}
                                 title="Break Up / End Friendship"
-                                className="p-3 bg-white/5 text-gray-600 border border-cyber-border hover:bg-cyber-pink hover:text-white hover:border-cyber-pink transition-all cursor-pointer"
+                                className="p-3 bg-black border-2 border-swiss-warning text-swiss-warning hover:bg-swiss-warning hover:text-white transition-all cursor-pointer"
                               >
                                 <Skull className="w-5 h-5" />
                               </button>
@@ -725,12 +740,12 @@ export default function App() {
                           </div>
                         </div>
                         <div className="space-y-1">
-                          <div className="flex justify-between text-[10px] font-mono uppercase opacity-40">
-                            <span>Relational_Sync</span>
+                          <div className="flex justify-between text-[10px] font-black uppercase tracking-widest opacity-40">
+                            <span>Relational Synergy</span>
                             <span>{Math.round(rel.closeness)}%</span>
                           </div>
-                          <div className="h-0.5 bg-white/5 overflow-hidden">
-                            <motion.div initial={{ width: 0 }} animate={{ width: `${rel.closeness}%` }} className={`h-full ${rel.type === 'Spouse' ? 'bg-cyber-pink' : rel.type === 'Partner' ? 'bg-red-500' : 'bg-cyber-blue'}`} />
+                          <div className="h-4 bg-swiss-muted border-2 border-swiss-border overflow-hidden">
+                            <motion.div initial={{ width: 0 }} animate={{ width: `${rel.closeness}%` }} className={`h-full ${rel.type === 'Spouse' ? 'bg-swiss-accent' : 'bg-swiss-border'}`} />
                           </div>
                         </div>
                       </div>
@@ -740,135 +755,125 @@ export default function App() {
               )}
 
               {activeTab === 'job' && (
-                <motion.div key="job" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-8">
-                  <SectionTitle title="Corporate Ladder" subtitle="Forge your professional path" />
+                <motion.div key="job" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-12">
+                  <SectionTitle title="career.html" subtitle="Professional progression and fiscal status" />
                   
-                  <div className="bg-black/80 text-white p-8 grid grid-cols-1 md:grid-cols-2 gap-8 border border-cyber-blue/30 relative overflow-hidden">
-                    <div className="absolute top-0 left-0 w-full h-[1px] bg-cyber-blue opacity-30 shadow-[0_0_10px_rgba(0,240,255,0.5)]" />
-                    <div className="relative z-10">
-                      <h3 className="text-[10px] font-mono uppercase opacity-50 mb-2 tracking-[0.2em]">Current_Subsystem_Occupancy</h3>
-                      {state.currentJob ? (
-                        <>
-                          <div className="text-5xl font-display tracking-widest text-cyber-blue mb-4 uppercase">{state.currentJob.title}</div>
-                          <div className="flex items-center gap-6">
-                            <div className="flex flex-col">
-                              <span className="text-[10px] font-mono uppercase opacity-40">Tenure</span>
-                              <span className="text-xl font-mono text-white">{state.yearsAtCurrentJob} CYC</span>
+                  <div className="bg-swiss-border text-white p-10 grid grid-cols-1 md:grid-cols-2 gap-12 relative overflow-hidden">
+                    <div className="relative z-10 space-y-8">
+                      <div>
+                        <h3 className="stat-label !text-white/40">Current Position</h3>
+                        {state.currentJob ? (
+                          <>
+                            <div className="text-5xl font-black uppercase tracking-tighter mb-6 italic">{state.currentJob.title}</div>
+                            <div className="grid grid-cols-2 gap-8">
+                              <div>
+                                <span className="stat-label !text-white/40">Tenure</span>
+                                <span className="text-2xl font-black">{state.yearsAtCurrentJob} CYC</span>
+                              </div>
+                              <div>
+                                <span className="stat-label !text-white/40">Efficiency</span>
+                                <span className={`text-2xl font-black ${state.jobPerformance > 80 ? 'text-blue-400' : state.jobPerformance < 30 ? 'text-orange-400' : 'text-white'}`}>{state.jobPerformance}%</span>
+                              </div>
                             </div>
-                            <div className="flex flex-col">
-                              <span className="text-[10px] font-mono uppercase opacity-40">Efficiency</span>
-                              <span className={`text-xl font-mono ${state.jobPerformance > 80 ? 'text-cyber-green' : state.jobPerformance < 30 ? 'text-cyber-pink' : 'text-white'}`}>{state.jobPerformance}%</span>
-                            </div>
-                            <div className="flex flex-col">
-                              <span className="text-[10px] font-mono uppercase opacity-40 text-cyber-blue">Payload</span>
-                              <span className="text-xl font-mono text-cyber-green">${state.currentJob.salary.toLocaleString()}</span>
-                            </div>
-                          </div>
-                        </>
-                      ) : (
-                        <div className="text-3xl font-display opacity-20 uppercase tracking-widest">IDLE_STATE // SEEKING_NODE</div>
-                      )}
-                    </div>
-                    <div className="hidden md:flex flex-col justify-center items-end relative z-10">
-                      <Zap className="w-16 h-16 opacity-10 absolute -right-4 -top-4" />
-                      <div className="text-right">
-                        <div className="text-[10px] uppercase opacity-50 mb-1">Financial Outlook</div>
-                        <div className="text-3xl font-mono text-blue-400">${(monthlyIncome - monthlyExpenses).toFixed(0)}<span className="text-xs">/MO</span></div>
+                          </>
+                        ) : (
+                          <div className="text-4xl font-black opacity-20 uppercase tracking-tighter">UNEMPLOYED // IDLE</div>
+                        )}
                       </div>
                     </div>
+                    <div className="flex flex-col justify-end items-end relative z-10 text-right">
+                      {state.currentJob && (
+                        <div>
+                          <span className="stat-label !text-white/40">Annual Payload</span>
+                          <div className="text-6xl font-black text-swiss-accent leading-none">${state.currentJob.salary.toLocaleString()}</div>
+                        </div>
+                      )}
+                    </div>
                     {state.currentJob && (
-                      <div className="col-span-full mt-4 flex items-center justify-between border-t border-white/10 pt-4">
-                         <div className="text-xs opacity-50 uppercase tracking-widest italic">Success requires dedication. Performance affects bonuses.</div>
+                      <div className="col-span-full mt-8 flex items-center justify-between border-t border-white/20 pt-8">
+                         <div className="text-[10px] opacity-40 uppercase font-black tracking-widest italic">Performance determines eligibility for senior roles.</div>
                          <button 
                           onClick={workHard}
-                          className="bg-white text-black px-4 py-2 text-xs font-black uppercase hover:bg-white/90 active:scale-95 transition-all"
+                          className="bg-black border-2 border-swiss-border text-white px-8 py-4 text-xs font-black uppercase hover:bg-swiss-accent hover:border-swiss-accent active:translate-y-1 transition-all"
                          >
-                           Work Hard
+                           Increase Workload
                          </button>
                       </div>
                     )}
                   </div>
 
-                  <div className="bg-cyber-card border border-cyber-border p-6 mb-8 font-mono">
-                    <h3 className="text-[10px] uppercase opacity-30 mb-4 tracking-widest">Financial_Diagnostic // Monthly_Cycle</h3>
-                    <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+                  <div className="bg-swiss-muted border-2 border-swiss-border p-8 mb-12">
+                    <h3 className="stat-label">Fiscal Report</h3>
+                    <div className="grid grid-cols-2 lg:grid-cols-5 gap-8">
                       <div>
-                        <div className="text-[10px] uppercase opacity-40">Inflow</div>
-                        <div className="text-lg text-cyber-green">${monthlyIncome.toFixed(0)}</div>
+                        <div className="stat-label">Revenue</div>
+                        <div className="text-2xl font-black text-blue-600">${monthlyIncome.toFixed(0)}</div>
                       </div>
                       <div>
-                        <div className="text-[10px] uppercase opacity-40">Tax_Siphon</div>
-                        <div className="text-lg text-cyber-pink">-${(annualTax / 12).toFixed(0)}</div>
+                        <div className="stat-label">Tax Deduction</div>
+                        <div className="text-2xl font-black text-swiss-warning">-${(annualTax / 12).toFixed(0)}</div>
                       </div>
                       <div>
-                        <div className="text-[10px] uppercase opacity-40">Base_Entropy</div>
-                        <div className="text-lg text-cyber-pink">-${(state.yearlyExpenses / 12).toFixed(0)}</div>
+                        <div className="stat-label">Overhead</div>
+                        <div className="text-2xl font-black text-swiss-warning">-${(state.yearlyExpenses / 12).toFixed(0)}</div>
                       </div>
                       <div>
-                        <div className="text-[10px] uppercase opacity-40">Asset_Drain</div>
-                        <div className="text-lg text-cyber-pink">-${state.assets.reduce((acc, curr) => acc + curr.monthlyCost, 0).toFixed(0)}</div>
+                        <div className="stat-label">Asset Drain</div>
+                        <div className="text-2xl font-black text-swiss-warning">-${state.assets.reduce((acc, curr) => acc + curr.monthlyCost, 0).toFixed(0)}</div>
                       </div>
-                      <div className="border-l border-cyber-border pl-4">
-                        <div className="text-[10px] uppercase opacity-60 font-bold">Net_Residual</div>
-                        <div className="text-xl text-cyber-blue">${(monthlyIncome - monthlyExpenses).toFixed(0)}</div>
+                      <div className="border-l-2 border-swiss-border pl-8">
+                        <div className="stat-label">Net Surplus</div>
+                        <div className="text-4xl font-black text-swiss-accent">${(monthlyIncome - monthlyExpenses).toFixed(0)}</div>
                       </div>
                     </div>
                   </div>
 
-                  <div className="space-y-6">
-                    <div className="flex items-center justify-between border-b border-cyber-border pb-2">
-                       <div className="flex items-center gap-4">
-                        <h4 className="text-lg font-display uppercase tracking-[0.2em] text-cyber-blue">Available_Nodes</h4>
+                  <div className="space-y-8">
+                    <div className="flex items-center justify-between border-b-4 border-swiss-border pb-4">
+                       <div className="flex items-center gap-6">
+                        <h4 className="text-3xl font-black uppercase tracking-tighter">Opportunities</h4>
                         {state.currentJob && (
                           <button 
                             onClick={retire}
-                            className="bg-cyber-pink/20 text-cyber-pink px-3 py-1 text-[10px] font-mono uppercase border border-cyber-pink/50 hover:bg-cyber-pink hover:text-white transition-all cursor-pointer"
+                            className="border-2 border-swiss-warning text-swiss-warning px-4 py-2 text-[10px] font-black uppercase hover:bg-swiss-warning hover:text-white transition-all cursor-pointer"
                           >
-                            Disconnect_Term
+                            Resign Position
                           </button>
                         )}
                        </div>
-                       <span className="text-[10px] font-mono opacity-30 uppercase tracking-widest">Global_Net_Filter</span>
+                       <span className="text-[10px] font-black uppercase opacity-30 tracking-widest">Global Sector Indices</span>
                     </div>
 
-                    <div className="grid grid-cols-1 gap-6">
+                    <div className="grid grid-cols-1 gap-8">
                       {Object.entries(JOBS.reduce((acc, job) => {
                         if (!acc[job.category]) acc[job.category] = [];
                         acc[job.category].push(job);
                         return acc;
                       }, {} as Record<string, Job[]>)).map(([category, jobs]) => (
-                        <div key={category} className="space-y-3">
-                          <h5 className="text-[10px] font-mono uppercase text-cyber-blue opacity-60 tracking-[0.4em] mb-4 flex items-center gap-2">
-                            <span className="w-1 h-1 bg-cyber-blue" /> {category}
-                          </h5>
-                          <div className="grid grid-cols-1 gap-3">
+                        <div key={category} className="space-y-6">
+                          <h5 className="text-[10px] font-black uppercase bg-swiss-border text-white px-3 py-1 inline-block tracking-widest">{category}</h5>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                             {jobs.map(job => (
                               <button 
                                 key={job.id}
                                 onClick={() => applyJob(job)}
                                 disabled={job.id === state.currentJob?.id}
-                                className={`p-5 border text-left group transition-all relative cyber-panel ${job.id === state.currentJob?.id ? 'border-cyber-blue bg-cyber-blue/5 opacity-100 cursor-default ring-1 ring-cyber-blue' : 'border-cyber-border hover:border-cyber-blue cursor-pointer'}`}
+                                className={`p-8 border-2 text-left group transition-all relative ${job.id === state.currentJob?.id ? 'border-swiss-accent bg-swiss-muted cursor-default' : 'border-swiss-border hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]'}`}
                               >
-                                <div className="flex justify-between items-center mb-1">
-                                  <div className="font-display text-2xl uppercase tracking-widest text-white">{job.title}</div>
-                                  <div className="font-mono text-cyber-green font-black text-lg">+{job.salary.toLocaleString()}</div>
+                                <div className="flex justify-between items-start mb-4">
+                                  <div className="font-black text-3xl uppercase tracking-tighter italic group-hover:text-swiss-accent transition-colors leading-none">{job.title}</div>
+                                  <div className="font-black text-xl text-swiss-accent">${job.salary.toLocaleString()}</div>
                                 </div>
-                                <div className="flex flex-col sm:flex-row gap-2 sm:gap-4 text-[9px] font-mono uppercase tracking-widest opacity-40 items-start sm:items-center">
-                                  <span className={state.education === job.educationRequired || state.education === EducationLevel.Doctorate ? 'text-gray-300' : 'text-cyber-pink italic'}>REQ: {job.educationRequired}</span>
+                                <div className="flex flex-wrap gap-4 text-[10px] font-black uppercase tracking-widest opacity-40">
+                                  <span className={state.education === job.educationRequired || state.education === EducationLevel.Doctorate ? '' : 'text-swiss-warning underline'}>Req: {job.educationRequired}</span>
                                   {job.yearsExperienceRequired && (
-                                    <span className={state.yearsAtCurrentJob >= job.yearsExperienceRequired ? 'text-gray-300' : 'text-cyber-pink italic'}>EXP: {job.yearsExperienceRequired} CYC</span>
+                                    <span className={state.yearsAtCurrentJob >= job.yearsExperienceRequired ? '' : 'text-swiss-warning underline'}>Exp: {job.yearsExperienceRequired} CYC</span>
                                   )}
                                   {job.minSmarts && (
-                                    <span className={state.smarts >= job.minSmarts ? 'text-gray-300' : 'text-cyber-pink italic'}>LOGIC: {job.minSmarts}</span>
-                                  )}
-                                  {job.minLooks && (
-                                    <span className={state.looks >= job.minLooks ? 'text-gray-300' : 'text-cyber-pink italic'}>OPTICS: {job.minLooks}</span>
-                                  )}
-                                  {job.minFitness && (
-                                    <span className={state.fitness >= job.minFitness ? 'text-gray-300' : 'text-cyber-pink italic'}>CHASSIS: {job.minFitness}</span>
+                                    <span className={state.smarts >= job.minSmarts ? '' : 'text-swiss-warning underline'}>Smarts: {job.minSmarts}</span>
                                   )}
                                 </div>
-                                {job.id === state.currentJob?.id && <div className="absolute top-2 right-2 flex items-center gap-1 text-[8px] font-mono uppercase text-cyber-blue"><Zap className="w-2 h-2" /> ACTIVE_LINK</div>}
+                                {job.id === state.currentJob?.id && <div className="absolute top-2 right-2 text-[8px] font-black uppercase text-swiss-accent">ACTIVE ROLE</div>}
                               </button>
                             ))}
                           </div>
@@ -880,17 +885,17 @@ export default function App() {
               )}
 
               {activeTab === 'activities' && (
-                <motion.div key="activities" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-8">
-                  <SectionTitle title="Recreation" subtitle="Invest in your well-being" />
+                <motion.div key="activities" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-12">
+                  <SectionTitle title="system.html" subtitle="Local engagement protocols and execution" />
                   
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                     <div className="md:col-span-2 p-6 bg-cyber-blue/10 border border-cyber-blue/30 flex justify-between items-center group cyber-panel">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                     <div className="md:col-span-2 p-10 bg-swiss-muted border-4 border-swiss-border flex justify-between items-center group">
                         <div>
-                          <h4 className="font-display text-2xl tracking-widest text-cyber-blue mb-1 flex items-center gap-2"><GraduationCap className="w-5 h-5" /> Neuro_Upload</h4>
-                          <p className="text-[10px] font-mono opacity-40 uppercase tracking-widest">Attain a higher cognitive degree for elite node access.</p>
+                          <h4 className="font-black text-4xl uppercase tracking-tighter mb-2 flex items-center gap-4 italic leading-none"><GraduationCap className="w-10 h-10" /> Education</h4>
+                          <p className="text-[10px] font-black uppercase tracking-widest opacity-40">Invest in higher certification to expand career parameters.</p>
                         </div>
-                        <button onClick={study} className="px-6 py-3 bg-cyber-blue text-black font-display text-lg uppercase tracking-widest hover:bg-cyber-green transition-all cursor-pointer shadow-[0_0_15px_rgba(0,240,255,0.2)]">
-                          Connect // $25k
+                        <button onClick={study} className="swiss-button-primary text-xl">
+                          ENROLL // $25k
                         </button>
                      </div>
 
@@ -898,68 +903,67 @@ export default function App() {
                         <button 
                          key={ent.id}
                          onClick={() => buyEntertainment(ent)}
-                         className="p-6 border border-cyber-border bg-cyber-card/50 hover:bg-cyber-blue hover:text-black transition-all text-left flex justify-between items-center group cursor-pointer cyber-panel"
+                         className="p-8 border-2 border-swiss-border bg-black hover:bg-swiss-accent hover:text-white transition-all text-left flex justify-between items-center group cursor-pointer"
                         >
                           <div>
-                             <div className="font-display text-xl uppercase tracking-widest">{ent.name}</div>
-                             <div className="flex flex-wrap gap-x-3 text-[9px] font-mono uppercase tracking-widest text-gray-500 group-hover:text-black/60">
-                               {ent.happinessBonus > 0 && <span>Neural +{ent.happinessBonus}</span>}
-                               {ent.healthBonus && <span>Vitality {ent.healthBonus > 0 ? '+' : ''}{ent.healthBonus}</span>}
-                               {ent.fitnessBonus && <span>Chassis {ent.fitnessBonus > 0 ? '+' : ''}{ent.fitnessBonus}</span>}
-                               {ent.smartsBonus && <span>Logic {ent.smartsBonus > 0 ? '+' : ''}{ent.smartsBonus}</span>}
-                               {ent.looksBonus && <span>Optics {ent.looksBonus > 0 ? '+' : ''}{ent.looksBonus}</span>}
+                             <div className="font-black text-2xl uppercase tracking-tighter italic leading-none mb-1">{ent.name}</div>
+                             <div className="flex flex-wrap gap-x-4 text-[9px] font-black uppercase tracking-widest opacity-60 group-hover:opacity-100">
+                               {ent.happinessBonus > 0 && <span>Happy +{ent.happinessBonus}</span>}
+                               {ent.healthBonus && <span>Hlth {ent.healthBonus > 0 ? '+' : ''}{ent.healthBonus}</span>}
+                               {ent.fitnessBonus && <span>Fit {ent.fitnessBonus > 0 ? '+' : ''}{ent.fitnessBonus}</span>}
+                               {ent.smartsBonus && <span>Smart {ent.smartsBonus > 0 ? '+' : ''}{ent.smartsBonus}</span>}
                              </div>
                           </div>
-                          <div className="text-xl font-mono text-cyber-green group-hover:text-black">${ent.cost.toLocaleString()}</div>
+                          <div className="text-3xl font-black italic">${ent.cost.toLocaleString()}</div>
                         </button>
                       ))}
 
                       <button 
                         onClick={findDate}
-                        className="p-6 border border-cyber-pink/30 bg-cyber-pink/5 hover:bg-cyber-pink/20 transition-all text-left flex justify-between items-center group cursor-pointer col-span-1 md:col-span-2"
+                        className="p-8 border-4 border-dashed border-swiss-warning bg-swiss-warning/5 hover:bg-swiss-warning hover:text-white transition-all text-left flex justify-between items-center group cursor-pointer col-span-1 md:col-span-2"
                       >
                         <div>
-                          <div className="font-display text-xl text-cyber-pink uppercase tracking-widest flex items-center gap-2"><Heart className="w-5 h-5 fill-current" /> Initialize_Dating_Protocol</div>
-                          <div className="text-[9px] font-mono uppercase tracking-widest text-cyber-pink/50">Ping potential social nodes for interaction</div>
+                          <div className="font-black text-3xl uppercase tracking-tighter italic flex items-center gap-4 leading-none"><Heart className="w-8 h-8 fill-current" /> Initialize Social Protocol</div>
+                          <div className="text-[10px] font-black uppercase tracking-widest opacity-50 group-hover:opacity-100">Scan for new interpersonal connections</div>
                         </div>
-                        <div className="text-xl font-mono text-cyber-pink font-black">$100</div>
+                        <div className="text-4xl font-black italic">$100</div>
                       </button>
                   </div>
                 </motion.div>
               )}
 
               {activeTab === 'assets' && (
-                <motion.div key="assets" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-8">
-                  <SectionTitle title="The Collection" subtitle="Your hard-earned inventory" />
+                <motion.div key="assets" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-12">
+                  <SectionTitle title="vault.html" subtitle="Secure repository of physical assets" />
                   
                   {state.assets.length === 0 ? (
-                    <div className="py-24 text-center border border-dashed border-cyber-border bg-cyber-card/30">
+                    <div className="py-24 text-center border-4 border-dashed border-swiss-muted bg-black">
                       <ShoppingBag className="w-16 h-16 mx-auto mb-6 opacity-5" />
-                      <p className="text-2xl font-display uppercase tracking-widest opacity-20">No_Inventory_Detected</p>
+                      <p className="text-2xl font-black uppercase tracking-widest opacity-20 italic">No Assets Detected</p>
                     </div>
                   ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                       {state.assets.map((asset, i) => (
-                        <div key={i} className="p-6 border border-cyber-border bg-cyber-card/50 group hover:translate-x-1 hover:-translate-y-1 transition-all cyber-panel">
-                          <div className="flex items-center gap-4 mb-4">
-                            <div className="p-3 bg-white/5 rounded-none border border-cyber-border">
-                              {asset.type === 'House' && <Home className="w-6 h-6 text-cyber-blue" />}
-                              {asset.type === 'Car' && <Car className="w-6 h-6 text-cyber-gold" />}
-                              {asset.type === 'Pet' && <Dog className="w-6 h-6 text-cyber-green" />}
+                        <div key={i} className="p-8 border-2 border-swiss-border bg-black group hover:shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] transition-all relative">
+                          <div className="flex items-center gap-6 mb-6">
+                            <div className="p-4 bg-swiss-muted border-2 border-swiss-border">
+                              {asset.type === 'House' && <Home className="w-8 h-8 text-swiss-accent" />}
+                              {asset.type === 'Car' && <Car className="w-8 h-8 text-swiss-warning" />}
+                              {asset.type === 'Pet' && <Dog className="w-8 h-8 text-swiss-border" />}
                             </div>
                             <div>
-                               <h3 className="font-display text-xl uppercase tracking-widest text-white">{asset.name}</h3>
-                               <span className="text-[10px] font-mono uppercase opacity-40 tracking-[0.2em]">{asset.type}</span>
+                               <h3 className="font-black text-3xl uppercase tracking-tighter italic leading-none">{asset.name}</h3>
+                               <span className="text-[10px] font-black uppercase opacity-40 tracking-[0.2em]">{asset.type}</span>
                             </div>
                           </div>
-                          <div className="flex justify-between items-end border-t border-cyber-border pt-4">
+                          <div className="flex justify-between items-end border-t-2 border-swiss-muted pt-6">
                             <div>
-                               <div className="text-[10px] font-mono uppercase opacity-30">Current_Valuation</div>
-                               <div className="font-mono font-bold text-cyber-green">${asset.price.toLocaleString()}</div>
+                               <div className="stat-label">Current Value</div>
+                               <div className="text-2xl font-black text-swiss-accent">${asset.price.toLocaleString()}</div>
                             </div>
                             <div className="text-right">
-                               <div className="text-[10px] font-mono uppercase opacity-30">Cycle_Entropy</div>
-                               <div className="font-mono text-cyber-pink">-${(asset.monthlyCost).toLocaleString()}<span className="text-[8px]">/mo</span></div>
+                               <div className="stat-label">Maintenance Cost</div>
+                               <div className="text-xl font-black text-swiss-warning">-${(asset.monthlyCost).toLocaleString()}<span className="text-[10px]">/mo</span></div>
                             </div>
                           </div>
                         </div>
@@ -971,7 +975,7 @@ export default function App() {
 
               {activeTab === 'shop' && (
                 <motion.div key="shop" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-12">
-                  <SectionTitle title="The Shop" subtitle="Procure high-value assets and companions" />
+                  <SectionTitle title="market.html" subtitle="Third-party procurement services" />
                   
                   <ShopSection title="Real Estate" icon={<Home />} items={HOUSES} buyFn={buyAsset} />
                   <ShopSection title="Luxury Autos" icon={<Car />} items={CARS} buyFn={buyAsset} />
@@ -983,10 +987,10 @@ export default function App() {
         </div>
       </main>
 
-      <footer className="fixed bottom-0 left-0 right-0 p-6 pointer-events-none z-10">
+      <footer className="fixed bottom-0 left-0 right-0 p-8 pointer-events-none z-10 hidden md:block">
         <div className="max-w-6xl mx-auto flex justify-between items-end">
-          <div className="bg-cyber-bg border border-cyber-border text-cyber-blue p-4 text-[10px] font-mono uppercase tracking-[0.3em] pointer-events-auto shadow-[0_0_15px_rgba(0,0,0,0.5)]">
-             System_Engine v2.0.42 // Link_Status: STABLE // {state.isDead ? 'EMERGENCY_HALT' : 'REALTIME_SIMULATION'}
+          <div className="bg-swiss-border text-white p-6 text-[11px] font-black uppercase tracking-[0.4em] pointer-events-auto leading-none">
+             SYSTEM STATUS: {state.isDead ? 'HALTED' : 'OPERATIONAL'} // CORE v.2.5.0
           </div>
         </div>
       </footer>
@@ -995,32 +999,31 @@ export default function App() {
 }
 
 function EmergencyButton({ label, color, icon, onClick }: { label: string; color: string; icon: React.ReactNode; onClick: () => void }) {
+  const isLight = color.includes('swiss-border') || color.includes('white') || color.includes('accent');
   return (
     <motion.button 
       initial={{ scale: 0.8, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       whileHover={{ scale: 1.02 }}
       onClick={onClick}
-      className={`w-full ${color} text-black p-4 flex items-center justify-between group cursor-pointer border-none shadow-[0_0_15px_rgba(0,0,0,0.3)] relative overflow-hidden`}
+      className={`w-full ${color} ${isLight ? 'text-black' : 'text-white'} p-6 flex items-center justify-between group cursor-pointer border-2 border-white/20 shadow-xl relative overflow-hidden`}
     >
-      <div className="absolute top-0 left-0 w-full h-[1px] bg-white opacity-20" />
-      <div className="flex items-center gap-3 relative z-10">
-        <span className="p-1.5 bg-black/20 rounded shadow-inner">
-          {React.cloneElement(icon as React.ReactElement, { className: 'w-4 h-4' })}
-        </span>
-        <span className="text-[11px] font-mono font-black uppercase tracking-widest">{label}</span>
+      <div className="flex items-center gap-4 relative z-10">
+        <div className="p-2 bg-black/20 rounded shadow-inner">
+          {React.cloneElement(icon as React.ReactElement, { className: 'w-6 h-6' })}
+        </div>
+        <span className="text-xs font-black uppercase tracking-widest">{label}</span>
       </div>
-      <div className="text-[10px] font-mono font-bold bg-black/20 px-2 py-0.5 rounded relative z-10">$500</div>
+      <div className="text-xl font-black bg-black/20 px-3 py-1 rounded relative z-10">$500</div>
     </motion.button>
   );
 }
 
 function SectionTitle({ title, subtitle }: { title: string, subtitle: string }) {
   return (
-    <div className="mb-10 relative">
-      <h2 className="text-5xl font-display uppercase tracking-widest text-white leading-none">{title}</h2>
-      <p className="text-[10px] font-mono opacity-40 uppercase tracking-[0.4em] translate-y-2">{subtitle}</p>
-      <div className="absolute -left-10 top-0 w-1 y-full bg-cyber-blue/30" />
+    <div className="mb-16 relative border-l-8 border-swiss-border pl-8">
+      <h2 className="text-8xl font-black uppercase tracking-tighter leading-[0.8] mb-4 italic">{title}</h2>
+      <p className="text-xs font-black uppercase tracking-[0.5em] opacity-30">{subtitle}</p>
     </div>
   );
 }
@@ -1034,30 +1037,30 @@ function ShopSection({ title, icon, items, buyFn }: { title: string, icon: React
 
   return (
     <section>
-      <h3 className="text-xs font-mono uppercase text-cyber-blue tracking-[0.4em] border-b border-cyber-border pb-2 mb-8 flex items-center gap-3">
-        {icon} TERMINAL_MARKET // {title}
+      <h3 className="text-xs font-black uppercase tracking-[0.4em] border-b-4 border-swiss-border pb-4 mb-12 flex items-center gap-4">
+        {icon} GLOBAL MARKET // {title}
       </h3>
-      <div className="space-y-10">
+      <div className="space-y-16">
         {categories.map(([category, catItems]) => (
-          <div key={category} className="space-y-4">
-            <h4 className="text-[10px] font-mono uppercase text-gray-600 tracking-[0.3em] pl-1 relative flex items-center gap-4">
-              <span className="bg-cyber-bg pr-4 relative z-10">{category}</span>
-              <div className="flex-1 h-[1px] bg-cyber-border" />
+          <div key={category} className="space-y-8">
+            <h4 className="text-[11px] font-black uppercase tracking-[0.3em] pl-1 relative flex items-center gap-6">
+              <span className="bg-black pr-8 relative z-10">{category}</span>
+              <div className="flex-1 h-[2px] bg-swiss-muted" />
             </h4>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {catItems.map(item => (
                 <button 
                   key={item.id}
                   onClick={() => buyFn(item)}
-                  className="p-6 border border-cyber-border bg-cyber-card/30 hover:border-cyber-blue hover:bg-cyber-blue hover:text-black transition-all group cursor-pointer cyber-panel"
+                  className="p-10 border-2 border-swiss-border bg-black hover:border-swiss-accent hover:shadow-[12px_12px_0px_0px_rgba(0,41,255,1)] transition-all group cursor-pointer text-left"
                 >
-                  <div className="flex justify-between items-start mb-6">
-                    <div className="font-display text-xl uppercase tracking-widest text-white group-hover:text-black">{item.name}</div>
-                    <div className="text-xl font-mono font-bold text-cyber-green group-hover:text-black">${item.price.toLocaleString()}</div>
+                  <div className="flex justify-between items-start mb-8">
+                    <div className="font-black text-3xl uppercase tracking-tighter italic group-hover:text-swiss-accent leading-none">{item.name}</div>
+                    <div className="text-4xl font-black italic">${item.price.toLocaleString()}</div>
                   </div>
-                  <div className="flex justify-between border-t border-cyber-border group-hover:border-black/20 pt-4 text-[10px] font-mono uppercase tracking-widest opacity-40 group-hover:opacity-100">
-                    <span>Entropy_Rate</span>
-                    <span className="text-cyber-pink group-hover:text-black">-${item.monthlyCost}/cyc</span>
+                  <div className="flex justify-between border-t-2 border-swiss-muted pt-6 text-[10px] font-black uppercase tracking-widest opacity-40">
+                    <span>Yearly Maintenance</span>
+                    <span className="text-swiss-warning">-${item.monthlyCost}/cyc</span>
                   </div>
                 </button>
               ))}
@@ -1071,21 +1074,21 @@ function ShopSection({ title, icon, items, buyFn }: { title: string, icon: React
 
 function DeathStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="bg-white/5 p-6 border border-white/10">
-      <div className="text-[10px] uppercase opacity-40 mb-1 font-black">{label}</div>
-      <div className="text-2xl font-mono font-black italic">{value}</div>
+    <div className="bg-swiss-muted p-6 border-2 border-swiss-border">
+      <div className="stat-label">{label}</div>
+      <div className="text-2xl font-black italic uppercase leading-none">{value}</div>
     </div>
   );
 }
 
 function StatBar({ label, value, icon, color }: { label: string; value: number; icon: React.ReactNode, color: string }) {
   return (
-    <div className="space-y-1 w-28">
-      <div className="flex items-center justify-between text-[8px] font-mono uppercase tracking-widest opacity-60">
-        <span className="flex items-center gap-1">{icon} {label}</span>
-        <span>{Math.round(value)}%</span>
+    <div className="space-y-2 w-32">
+      <div className="flex items-center justify-between">
+        <span className="stat-label !mb-0">{label}</span>
+        <span className="text-[10px] font-black">{Math.round(value)}%</span>
       </div>
-      <div className="h-0.5 bg-white/5 w-full overflow-hidden border border-cyber-border">
+      <div className="h-4 bg-swiss-muted border-2 border-swiss-border w-full overflow-hidden">
         <motion.div 
           initial={{ width: 0 }}
           animate={{ width: `${value}%` }}
@@ -1100,13 +1103,15 @@ function TabButton({ active, onClick, icon, label }: { active: boolean; onClick:
   return (
     <button 
       onClick={onClick}
-      className={`w-full flex items-center gap-4 p-4 border border-cyber-border transition-all duration-300 group cursor-pointer relative overflow-hidden ${active ? 'bg-cyber-blue/10 text-cyber-blue border-cyber-blue shadow-[0_0_15px_rgba(0,240,255,0.1)]' : 'bg-transparent text-gray-500 hover:text-white hover:bg-white/5'}`}
+      className={`w-full flex items-center justify-between p-6 border-2 transition-all duration-200 group cursor-pointer ${active ? 'bg-swiss-accent text-black border-swiss-accent shadow-[12px_12px_0px_0px_rgba(0,240,255,0.4)]' : 'bg-transparent text-white border-transparent hover:bg-swiss-muted hover:border-swiss-muted'}`}
     >
-      {active && <div className="absolute left-0 top-0 w-1 h-full bg-cyber-blue" />}
-      <span className={`w-4 h-4 transition-transform group-hover:scale-110 ${active ? 'opacity-100' : 'opacity-40'}`}>
-        {React.cloneElement(icon, { strokeWidth: 2 })}
-      </span>
-      <span className="text-[10px] font-mono uppercase tracking-[0.3em] font-bold">{label}</span>
+      <div className="flex items-center gap-6">
+        <span className={`w-6 h-6 transition-transform group-hover:scale-110 ${active ? 'opacity-100' : 'opacity-40'}`}>
+          {React.cloneElement(icon, { strokeWidth: 3 })}
+        </span>
+        <span className="text-sm uppercase font-black tracking-widest leading-none">{label}</span>
+      </div>
+      {active && <Zap className="w-5 h-5 text-black animate-pulse" />}
     </button>
   );
 }
