@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { motion, AnimatePresence, useMotionValue, useSpring } from 'motion/react';
+import { motion, AnimatePresence } from 'motion/react';
 import { 
   User, 
   Briefcase, 
@@ -46,20 +46,6 @@ const createInitialState = (name: string = ''): GameState => ({
 });
 
 export default function App() {
-  const mouseX = useMotionValue(0);
-  const mouseY = useMotionValue(0);
-  const springX = useSpring(mouseX, { stiffness: 500, damping: 28 });
-  const springY = useSpring(mouseY, { stiffness: 500, damping: 28 });
-
-  useEffect(() => {
-    const handleMouseMove = (e: MouseEvent) => {
-      mouseX.set(e.clientX);
-      mouseY.set(e.clientY);
-    };
-    window.addEventListener('mousemove', handleMouseMove);
-    return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, [mouseX, mouseY]);
-
   const [state, setState] = useState<GameState>(createInitialState());
   const [activeTab, setActiveTab] = useState<'life' | 'job' | 'assets' | 'social' | 'activities' | 'shop'>('life');
   const [isNamingScreen, setIsNamingScreen] = useState(true);
@@ -519,24 +505,56 @@ export default function App() {
     }));
   };
 
+  if (isNamingScreen) {
+    return (
+      <div className="min-h-screen bg-swiss-bg text-swiss-text flex items-center justify-center p-8 font-sans">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="w-full max-w-md space-y-12 text-center"
+        >
+          <div className="space-y-4">
+             <div className="w-20 h-2 w-full bg-swiss-accent mx-auto mb-8" />
+             <h1 className="text-7xl font-black uppercase tracking-tighter leading-none italic">identity</h1>
+             <p className="text-xs uppercase font-black tracking-widest opacity-60">Initialize new user session</p>
+          </div>
+          <div className="space-y-8">
+            <input 
+              autoFocus
+              type="text" 
+              value={nameInput}
+              onChange={(e) => setNameInput(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleStartGame()}
+              placeholder="ENTER NAME"
+              className="w-full bg-transparent border-b-8 border-swiss-border p-4 text-5xl font-black uppercase tracking-tighter outline-none focus:border-swiss-accent transition-colors text-center"
+            />
+            <button 
+              onClick={handleStartGame}
+              className="w-full bg-swiss-accent text-black py-8 font-black uppercase tracking-[0.2em] hover:bg-white transition-all disabled:opacity-20 text-xl cursor-pointer"
+              disabled={!nameInput.trim()}
+            >
+              START JOURNEY
+            </button>
+          </div>
+        </motion.div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-swiss-bg text-swiss-text font-sans p-4 md:p-8">
-      <motion.div 
-        className="cursor-follower"
-        style={{ x: springX, y: springY, translateX: '-50%', translateY: '-50%' }}
-      />
-      {/* HUD / Stats Bar */}
-      <header className="fixed bottom-0 left-0 right-0 z-50 bg-black border-t-2 border-swiss-border p-4 px-6 md:static md:bg-transparent md:border-none md:p-0 md:mb-12">
-        <div className="max-w-6xl mx-auto flex flex-wrap gap-8 justify-between items-end">
+      {/* Top Header / Stats */}
+      <header className="fixed top-0 left-0 right-0 z-50 bg-black/80 backdrop-blur-md border-b-2 border-swiss-border p-4 px-6 mb-12">
+        <div className="max-w-6xl mx-auto flex flex-wrap gap-8 justify-between items-center">
           <div className="flex flex-col">
-            <span className="stat-label">identity.html</span>
+            <span className="stat-label">Identity</span>
             <div className="flex items-center gap-2">
               <span className="font-black text-4xl uppercase tracking-tighter leading-none text-white">{state.name || 'ANONYMOUS'}</span>
             </div>
           </div>
 
           <div className="flex flex-col">
-            <span className="stat-label">uptime.html</span>
+            <span className="stat-label">Age</span>
             <div className="flex items-center gap-2 text-white">
               <Calendar className="w-4 h-4" />
               <span className="font-black text-4xl leading-none">{state.age} <span className="text-xs font-normal opacity-50">YRS</span></span>
@@ -544,7 +562,7 @@ export default function App() {
           </div>
           
           <div className="flex flex-col">
-            <span className="stat-label">finance.html</span>
+            <span className="stat-label">Bank</span>
             <div className="flex items-center gap-2">
               <DollarSign className="w-5 h-5 text-swiss-accent" />
               <span className="font-black text-4xl text-swiss-accent leading-none">${state.money.toLocaleString()}</span>
@@ -561,25 +579,25 @@ export default function App() {
         </div>
       </header>
 
-      <main className="max-w-6xl mx-auto pb-44 md:pb-24">
+      <main className="max-w-6xl mx-auto pt-44 md:pt-32 pb-24">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           
           {/* Navigation Sidebar */}
           <nav className="lg:col-span-3 space-y-3">
-            <TabButton active={activeTab === 'life'} onClick={() => setActiveTab('life')} icon={<User />} label="journal.html" />
-            <TabButton active={activeTab === 'social'} onClick={() => setActiveTab('social')} icon={<Users />} label="nodes.html" />
-            <TabButton active={activeTab === 'job'} onClick={() => setActiveTab('job')} icon={<Briefcase />} label="career.html" />
-            <TabButton active={activeTab === 'activities'} onClick={() => setActiveTab('activities')} icon={<Film />} label="system.html" />
-            <TabButton active={activeTab === 'assets'} onClick={() => setActiveTab('assets')} icon={<Home />} label="vault.html" />
-            <TabButton active={activeTab === 'shop'} onClick={() => setActiveTab('shop')} icon={<ShoppingBag />} label="market.html" />
+            <TabButton active={activeTab === 'life'} onClick={() => setActiveTab('life')} icon={<User />} label="Journal" />
+            <TabButton active={activeTab === 'social'} onClick={() => setActiveTab('social')} icon={<Users />} label="Social" />
+            <TabButton active={activeTab === 'job'} onClick={() => setActiveTab('job')} icon={<Briefcase />} label="Career" />
+            <TabButton active={activeTab === 'activities'} onClick={() => setActiveTab('activities')} icon={<Film />} label="System" />
+            <TabButton active={activeTab === 'assets'} onClick={() => setActiveTab('assets')} icon={<Home />} label="Assets" />
+            <TabButton active={activeTab === 'shop'} onClick={() => setActiveTab('shop')} icon={<ShoppingBag />} label="Market" />
             
             <button 
               onClick={handleAgeUp}
-              disabled={state.isDead || isNamingScreen}
+              disabled={state.isDead}
               className="w-full mt-10 bg-swiss-accent text-black py-8 rounded-none font-black uppercase tracking-[0.2em] hover:bg-white transition-all disabled:opacity-30 flex flex-col items-center justify-center gap-1 group cursor-pointer border-none active:scale-[0.98]"
             >
               <TrendingUp className="w-8 h-8 group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" />
-              <span>execute_cycle.sh</span>
+              <span>ADVANCE AGE</span>
             </button>
 
             {/* Emergency Boosts */}
@@ -605,41 +623,6 @@ export default function App() {
           {/* Content Area */}
           <div className="lg:col-span-9 min-h-[70vh] bg-black border-2 border-swiss-border p-8 md:p-12 relative overflow-hidden">
             <AnimatePresence mode="wait">
-              {isNamingScreen ? (
-                <motion.div 
-                  key="naming"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  exit={{ opacity: 0 }}
-                  className="fixed inset-0 z-50 bg-black flex items-center justify-center p-8"
-                >
-                  <div className="w-full max-w-sm space-y-12 relative z-10 text-center">
-                    <div className="space-y-4">
-                       <h1 className="text-7xl font-black uppercase tracking-tighter leading-none italic">identity</h1>
-                       <p className="text-xs uppercase font-black tracking-widest opacity-30">Awaiting user classification input</p>
-                    </div>
-                    <div className="space-y-8">
-                      <input 
-                        autoFocus
-                        type="text" 
-                        value={nameInput}
-                        onChange={(e) => setNameInput(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && handleStartGame()}
-                        placeholder="NAME_REQUIRED"
-                        className="w-full bg-transparent border-b-8 border-swiss-border p-4 text-5xl font-black uppercase tracking-tighter outline-none focus:border-swiss-accent transition-colors text-center"
-                      />
-                      <button 
-                        onClick={handleStartGame}
-                        className="w-full bg-swiss-accent text-black py-8 font-black uppercase tracking-[0.2em] hover:bg-swiss-border transition-all disabled:opacity-20 text-xl"
-                        disabled={!nameInput.trim()}
-                      >
-                        COMMENCE LIFE
-                      </button>
-                    </div>
-                  </div>
-                </motion.div>
-              ) : null}
-
               {state.isDead ? (
                 <motion.div 
                   initial={{ opacity: 0 }}
@@ -679,7 +662,7 @@ export default function App() {
 
               {activeTab === 'life' && (
                 <motion.div key="life" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-12">
-                  <SectionTitle title="chronology.log" subtitle="Historical record of operational events" />
+                  <SectionTitle title="Chronology" subtitle="Historical record of life events" />
                   <div className="space-y-4 h-[55vh] overflow-y-auto pr-6 custom-scrollbar">
                     {state.log.map((entry, i) => (
                       <div key={i} className={`p-6 border-b-2 transition-all ${entry.startsWith('Event') ? 'bg-swiss-accent text-black border-none' : entry.startsWith('Year') ? 'border-swiss-border bg-swiss-muted text-white' : i === 0 ? 'bg-swiss-accent text-black border-none' : 'border-swiss-muted bg-black text-white'}`}>
@@ -693,7 +676,7 @@ export default function App() {
 
               {activeTab === 'social' && (
                 <motion.div key="social" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-12">
-                  <SectionTitle title="social.html" subtitle="Interpersonal connection hierarchy" />
+                  <SectionTitle title="Connections" subtitle="Interpersonal relationship status" />
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {state.relationships.map(rel => (
                       <div key={rel.id} className={`p-8 swiss-panel hover:shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] ${rel.type === 'Spouse' ? 'border-swiss-accent' : 'border-swiss-border'}`}>
@@ -756,7 +739,7 @@ export default function App() {
 
               {activeTab === 'job' && (
                 <motion.div key="job" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-12">
-                  <SectionTitle title="career.html" subtitle="Professional progression and fiscal status" />
+                  <SectionTitle title="Profession" subtitle="Career progression and fiscal status" />
                   
                   <div className="bg-swiss-border text-white p-10 grid grid-cols-1 md:grid-cols-2 gap-12 relative overflow-hidden">
                     <div className="relative z-10 space-y-8">
@@ -886,7 +869,7 @@ export default function App() {
 
               {activeTab === 'activities' && (
                 <motion.div key="activities" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-12">
-                  <SectionTitle title="system.html" subtitle="Local engagement protocols and execution" />
+                  <SectionTitle title="Interaction" subtitle="Local engagement protocols" />
                   
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                      <div className="md:col-span-2 p-10 bg-swiss-muted border-4 border-swiss-border flex justify-between items-center group">
@@ -934,7 +917,7 @@ export default function App() {
 
               {activeTab === 'assets' && (
                 <motion.div key="assets" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-12">
-                  <SectionTitle title="vault.html" subtitle="Secure repository of physical assets" />
+                  <SectionTitle title="Possessions" subtitle="Physical asset inventory" />
                   
                   {state.assets.length === 0 ? (
                     <div className="py-24 text-center border-4 border-dashed border-swiss-muted bg-black">
@@ -975,7 +958,7 @@ export default function App() {
 
               {activeTab === 'shop' && (
                 <motion.div key="shop" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-12">
-                  <SectionTitle title="market.html" subtitle="Third-party procurement services" />
+                  <SectionTitle title="Marketplace" subtitle="Asset procurement services" />
                   
                   <ShopSection title="Real Estate" icon={<Home />} items={HOUSES} buyFn={buyAsset} />
                   <ShopSection title="Luxury Autos" icon={<Car />} items={CARS} buyFn={buyAsset} />
@@ -999,14 +982,14 @@ export default function App() {
 }
 
 function EmergencyButton({ label, color, icon, onClick }: { label: string; color: string; icon: React.ReactNode; onClick: () => void }) {
-  const isLight = color.includes('swiss-border') || color.includes('white') || color.includes('accent');
+  const isLight = color.includes('accent') || color.includes('white');
   return (
     <motion.button 
       initial={{ scale: 0.8, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       whileHover={{ scale: 1.02 }}
       onClick={onClick}
-      className={`w-full ${color} ${isLight ? 'text-black' : 'text-white'} p-6 flex items-center justify-between group cursor-pointer border-2 border-white/20 shadow-xl relative overflow-hidden`}
+      className={`w-full ${color} ${isLight ? 'text-black' : 'text-white'} p-6 flex items-center justify-between group cursor-pointer border-2 border-white/10 shadow-xl relative overflow-hidden`}
     >
       <div className="flex items-center gap-4 relative z-10">
         <div className="p-2 bg-black/20 rounded shadow-inner">
@@ -1023,7 +1006,7 @@ function SectionTitle({ title, subtitle }: { title: string, subtitle: string }) 
   return (
     <div className="mb-16 relative border-l-8 border-swiss-border pl-8">
       <h2 className="text-8xl font-black uppercase tracking-tighter leading-[0.8] mb-4 italic">{title}</h2>
-      <p className="text-xs font-black uppercase tracking-[0.5em] opacity-30">{subtitle}</p>
+      <p className="text-xs font-black uppercase tracking-[0.5em] opacity-60">{subtitle}</p>
     </div>
   );
 }
@@ -1052,7 +1035,7 @@ function ShopSection({ title, icon, items, buyFn }: { title: string, icon: React
                 <button 
                   key={item.id}
                   onClick={() => buyFn(item)}
-                  className="p-10 border-2 border-swiss-border bg-black hover:border-swiss-accent hover:shadow-[12px_12px_0px_0px_rgba(0,41,255,1)] transition-all group cursor-pointer text-left"
+                  className="p-10 border-2 border-swiss-border bg-black hover:border-swiss-accent hover:shadow-[12px_12px_0px_0px_rgba(0,240,255,0.3)] transition-all group cursor-pointer text-left"
                 >
                   <div className="flex justify-between items-start mb-8">
                     <div className="font-black text-3xl uppercase tracking-tighter italic group-hover:text-swiss-accent leading-none">{item.name}</div>
