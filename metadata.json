@@ -1,0 +1,8 @@
+{
+  "name": "Life Sim: The Replica",
+  "description": "A deep life simulation game. Choose a career, manage finances, pay bills, and build your legacy by buying homes and cars.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
